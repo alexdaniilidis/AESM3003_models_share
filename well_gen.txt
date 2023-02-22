@@ -1,0 +1,4 @@
+well_list = ['PROD1', 'INJ1', ]
+well_type = ['PRD', 'INJ', ]
+well_x = [2, 38, ]
+well_y = [2, 38, ]
