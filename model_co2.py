@@ -69,7 +69,7 @@ class Model(RRMBaseModel):
         # Some newton parameters for non-linear solution:
         self.params.first_ts = 1e-5
         self.params.mult_ts = 1.5
-        self.params.max_ts = 5
+        self.params.max_ts = 20
 
         self.params.tolerance_newton = 1e-3
         self.params.tolerance_linear = 1e-4
