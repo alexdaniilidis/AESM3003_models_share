@@ -4,20 +4,19 @@ import matplotlib.pyplot as plt
 import os
 
 
-
 # check if the output directory exists
 if not os.path.exists('Output'):
-    # if not, and make it
+    # if not, make it
     os.mkdir('Output/')
 
 
 # list of application, model and grid options
-application = ['GT', 'CCS', 'DO']
-model = ['Model1', 'Model2', 'Model3']
-grid = ['VeryFine', 'Fine', 'Coarse']
+application = ['GT', 'CCS']
+model = ['ScenA', 'ScenB']
+# grid = ['VeryFine', 'Fine', 'Coarse']
 
-# select application, model, grid and define filename
-filename = application[0]+ '_' + model[0] + grid[2]
+### -> select application <- ####, model, grid and define filename
+filename = application[0]+ '_' + model[1] + 'Fine'
 dir_filename = r'Output/'+filename
 
 # setup log file
@@ -29,23 +28,43 @@ if 'GT' in filename:
     plot_cols = ['BHP', 'temperature', 'water rate']
 if 'CCS' in filename:
     from model_co2 import Model
-    plot_cols = ['BHP', 'wat rate', 'gas rate']
-if 'DO' in filename:
-    from model_2ph_do import Model
-    plot_cols = ['BHP', 'water rate', 'oil rate']
+    plot_cols = ['BHP', 'gas rate', 'wat rate']
+
 
 
 # Load grid file of geo-model at defined resolution
 grid_file = filename.split('_')[1]
-if '1' in grid_file:
+if 'A' in grid_file:
     model_dir = r'Reservoir Models/Arcuate Platform (Gentle Clinoform Dip)/'
-if '2' in grid_file:
+if 'B' in grid_file:
     model_dir = r'Reservoir Models/Elongated Platform (Steep Clinoform Dip)/'
-if '3' in grid_file:
-    model_dir = r'Reservoir Models/Elongated Platform (Gentle Clinoform Dip)/'
+
 
 # construct model
 m = Model(model_dir+grid_file+'.grdecl')
+
+
+# define well diameter and radius
+well_dia = 0.152
+well_rad = well_dia / 2
+
+# add injector well
+m.reservoir.add_well('INJ1')
+
+# add perforations ##### -> HERE YOU CAN CHANGE THE X,Y GRID COORDINATES OF THE WELL <- ####
+for k in range(m.reservoir.nz):
+    m.reservoir.add_perforation(m.reservoir.wells[0], 25, 10, k+1, well_radius=well_rad,
+                                multi_segment=False, verbose=False)
+
+if 'GT' in filename:
+    # add production well - CONDITIONAL TO APPLICATION TYPE
+    m.reservoir.add_well('PRD1')
+
+    # add perforations ##### -> HERE YOU CAN CHANGE THE X,Y GRID COORDINATES OF THE WELL <- ####
+    for k in range(m.reservoir.nz):
+        m.reservoir.add_perforation(m.reservoir.wells[1], 25, 50, k+1, well_radius=well_rad,
+                                    multi_segment=False, verbose=False)
+
 
 # Initialise model
 m.init()
@@ -74,8 +93,17 @@ m.print_stat()
 time_data = pd.DataFrame.from_dict(m.physics.engine.time_data)
 time_data['Time (yrs)'] = time_data['time'] / 365
 
+#remove not needed columns from time_data results
+press_gridcells = time_data.filter(like='reservoir').columns.tolist()
+chem_cols = time_data.filter(like='kmol').columns.tolist()
+
+# remove collumns from data
+time_data.drop(columns=press_gridcells + chem_cols, inplace=True)
+
+
 time_data.to_excel(dir_filename+'_time_data'+ '.xlsx', 'Sheet1')
 time_data.to_pickle(dir_filename+'_time_data'+ '.pkl')
+
 
 
 ## Do a basic plot to check output

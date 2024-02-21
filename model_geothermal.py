@@ -52,7 +52,7 @@ class Model(RRMBaseModel):
                                   max_p=400, min_e=1000, max_e=10000, grav=True)
 
         # Define time stepping criteria (first timestep 0.01 days, maximum timestep size 30 days) - keep default values
-        self.params.first_ts = 1e-4
+        self.params.first_ts = 1e-8
         self.params.mult_ts = 4
         self.params.max_ts = 365
 
